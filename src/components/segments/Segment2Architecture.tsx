@@ -1,11 +1,53 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { initGSAP, gsap, ScrollTrigger } from "@/lib/gsap";
+
+type Stage = "drawing" | "rnd" | "scaleup" | "manufacturing";
+
+const STAGE_CONTENT = {
+  rnd: {
+    label: "R&D",
+    title: "Research & Development",
+    description: "Advanced laboratory synthesis and process development capabilities for complex chemistry.",
+    points: [
+      "State-of-the-art R&D laboratories",
+      "Process chemistry expertise",
+      "Analytical and quality control",
+      "Safety-first development protocols",
+    ],
+    color: "var(--color-blue)",
+  },
+  scaleup: {
+    label: "SCALE-UP",
+    title: "Pilot & Scale-Up",
+    description: "Seamless transition from lab to production with pilot-scale manufacturing and optimization.",
+    points: [
+      "Pilot plant capabilities",
+      "Process optimization",
+      "Scale-up risk mitigation",
+      "Integrated facility advantage",
+    ],
+    color: "var(--color-lavender)",
+  },
+  manufacturing: {
+    label: "MANUFACTURING",
+    title: "Commercial Manufacturing",
+    description: "900 m³ reactor capacity delivering reliable commercial supply at scale.",
+    points: [
+      "Large-scale production",
+      "Hazardous chemistry expertise",
+      "Proven operational discipline",
+      "Quality and regulatory compliance",
+    ],
+    color: "var(--color-coral)",
+  },
+};
 
 export default function Segment2Architecture() {
   const sectionRef = useRef<HTMLElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const [currentStage, setCurrentStage] = useState<Stage>("drawing");
 
   useEffect(() => {
     initGSAP();
@@ -13,12 +55,10 @@ export default function Segment2Architecture() {
     const svg = svgRef.current;
     if (!section || !svg) return;
 
-    // Get all paths for animation
-    const paths = svg.querySelectorAll("path, line, rect, circle, ellipse");
-
-    // Set up path animations
-    paths.forEach((path) => {
-      if (path instanceof SVGPathElement || path instanceof SVGLineElement) {
+    // Get all drawable paths for progressive drawing
+    const drawablePaths = svg.querySelectorAll("path, line, polyline");
+    drawablePaths.forEach((path) => {
+      if (path instanceof SVGPathElement || path instanceof SVGLineElement || path instanceof SVGPolylineElement) {
         const length = path.getTotalLength?.() || 0;
         if (length > 0) {
           gsap.set(path, {
@@ -26,100 +66,97 @@ export default function Segment2Architecture() {
             strokeDashoffset: length,
           });
         }
-      } else if (path instanceof SVGRectElement || path instanceof SVGCircleElement || path instanceof SVGEllipseElement) {
-        gsap.set(path, { opacity: 0 });
       }
     });
 
-    // Scroll timeline - STATE BY STATE
+    // Set all shapes initially invisible
+    gsap.set([".building-shape", ".tank-shape", ".tower-shape"], { opacity: 0 });
+
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: section,
         start: "top top",
         end: "bottom top",
         scrub: 1,
-        pin: ".segment2-content",
+        pin: ".segment2-sticky",
+        onUpdate: (self) => {
+          const progress = self.progress;
+          if (progress < 0.25) {
+            setCurrentStage("drawing");
+          } else if (progress < 0.5) {
+            setCurrentStage("rnd");
+          } else if (progress < 0.75) {
+            setCurrentStage("scaleup");
+          } else {
+            setCurrentStage("manufacturing");
+          }
+        },
       },
     });
 
-    const allPaths = Array.from(paths);
+    // STAGE 1: PROGRESSIVE FACILITY DRAWING (0-0.25)
+    // Site boundary and roads
+    tl.to(".site-boundary", { strokeDashoffset: 0, duration: 0.03 }, 0)
+      .to(".road-network", { strokeDashoffset: 0, duration: 0.04, stagger: 0.005 }, 0.03);
 
-    // STATE 1: Title appears (0-0.12)
-    tl.fromTo(".seg2-state1-title", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.08 })
-      .to(".seg2-state1-title", { opacity: 1, duration: 0.04 });
+    // Major buildings constructed
+    tl.to(".building-main", { strokeDashoffset: 0, duration: 0.05, stagger: 0.008 }, 0.07)
+      .to(".building-shape", { opacity: 0.03, duration: 0.02 }, 0.11);
 
-    // STATE 2: First point (0.12-0.24)
-    tl.to(".seg2-state1-title", { opacity: 0, y: -40, duration: 0.06 }, 0.12)
-      .fromTo(".seg2-state2-text", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.08 }, 0.14)
-      .to(".seg2-state2-text", { opacity: 1, duration: 0.04 });
+    // Process towers drawn
+    tl.to(".tower-main", { strokeDashoffset: 0, duration: 0.04, stagger: 0.006 }, 0.12)
+      .to(".tower-detail", { strokeDashoffset: 0, duration: 0.02 }, 0.16)
+      .to(".tower-shape", { opacity: 1, duration: 0.01 }, 0.16);
 
-    // STATE 3: Second point (0.24-0.36)
-    tl.to(".seg2-state2-text", { opacity: 0, y: -40, duration: 0.06 }, 0.24)
-      .fromTo(".seg2-state3-text", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 0.08 }, 0.26)
-      .to(".seg2-state3-text", { opacity: 1, duration: 0.04 });
+    // Storage tanks
+    tl.to(".tank-main", { strokeDashoffset: 0, duration: 0.03, stagger: 0.005 }, 0.18)
+      .to(".tank-shape", { opacity: 1, duration: 0.01 }, 0.20);
 
-    // STATE 4: Facility sketch begins (0.36-1.0)
-    tl.to(".seg2-state3-text", { opacity: 0.4, scale: 0.9, x: -100, duration: 0.08 }, 0.36)
-      .to(".seg2-facility-label", { opacity: 1, duration: 0.06 }, 0.38);
+    // Pipe networks
+    tl.to(".pipe-network", { strokeDashoffset: 0, duration: 0.03, stagger: 0.004 }, 0.21);
 
-    // PHASE 1: Construction grid (0.40-0.44) - Always slightly visible
-    tl.to(".construction-grid", {
-      opacity: 0.15,
-      duration: 0.04,
-    }, 0.40);
+    // Supporting structures
+    tl.to(".support-structure", { strokeDashoffset: 0, duration: 0.02, stagger: 0.003 }, 0.24);
 
-    // PHASE 2: Ground/site outline (0.44-0.50)
-    tl.to(".site-outline", {
-      strokeDashoffset: 0,
-      duration: 0.06,
-      stagger: 0.01,
-    }, 0.44);
+    // STAGE 2: R&D FOCUS (0.25-0.5)
+    tl.to(".facility-svg", {
+      x: "15%",
+      y: "5%",
+      scale: 1.15,
+      duration: 0.1,
+    }, 0.25)
+      .to(".zone-rnd-overlay", { opacity: 0.12, duration: 0.05 }, 0.28)
+      .to(".rnd-label", { opacity: 1, duration: 0.05 }, 0.30)
+      .to(".connecting-path-rnd", { strokeDashoffset: 0, duration: 0.08 }, 0.32);
 
-    // PHASE 3: Major building outlines (0.50-0.62)
-    tl.to(".building-main", {
-      strokeDashoffset: 0,
-      opacity: 1,
-      duration: 0.10,
-      stagger: 0.015,
-    }, 0.50)
-      .to(".building-fill", { opacity: 0.03, duration: 0.02 }, 0.58);
+    // STAGE 3: SCALE-UP FOCUS (0.5-0.75)
+    tl.to(".facility-svg", {
+      x: "0%",
+      y: "3%",
+      scale: 1.1,
+      duration: 0.1,
+    }, 0.5)
+      .to(".zone-rnd-overlay", { opacity: 0.04, duration: 0.03 }, 0.50)
+      .to(".rnd-label", { opacity: 0.3, duration: 0.03 }, 0.50)
+      .to(".zone-scaleup-overlay", { opacity: 0.12, duration: 0.05 }, 0.53)
+      .to(".scaleup-label", { opacity: 1, duration: 0.05 }, 0.55)
+      .to(".connecting-path-scaleup", { strokeDashoffset: 0, duration: 0.08 }, 0.57);
 
-    // PHASE 4: Process towers (0.62-0.72)
-    tl.to(".tower-structure", {
-      strokeDashoffset: 0,
-      opacity: 1,
-      duration: 0.08,
-      stagger: 0.012,
-    }, 0.62)
-      .to(".tower-detail", { opacity: 1, duration: 0.02 }, 0.68);
+    // STAGE 4: MANUFACTURING FOCUS (0.75-1.0)
+    tl.to(".facility-svg", {
+      x: "-15%",
+      y: "2%",
+      scale: 1.12,
+      duration: 0.1,
+    }, 0.75)
+      .to(".zone-scaleup-overlay", { opacity: 0.04, duration: 0.03 }, 0.75)
+      .to(".scaleup-label", { opacity: 0.3, duration: 0.03 }, 0.75)
+      .to(".zone-mfg-overlay", { opacity: 0.12, duration: 0.05 }, 0.78)
+      .to(".mfg-label", { opacity: 1, duration: 0.05 }, 0.80)
+      .to(".connecting-path-mfg", { strokeDashoffset: 0, duration: 0.08 }, 0.82);
 
-    // PHASE 5: Tanks and equipment (0.72-0.80)
-    tl.to(".tank-structure", {
-      strokeDashoffset: 0,
-      opacity: 1,
-      duration: 0.06,
-      stagger: 0.01,
-    }, 0.72);
-
-    // PHASE 6: Pipe networks (0.80-0.88)
-    tl.to(".pipe-network", {
-      strokeDashoffset: 0,
-      duration: 0.06,
-      stagger: 0.008,
-    }, 0.80);
-
-    // PHASE 7: Supporting structures (0.88-0.94)
-    tl.to(".support-building", {
-      strokeDashoffset: 0,
-      opacity: 1,
-      duration: 0.04,
-      stagger: 0.008,
-    }, 0.88);
-
-    // PHASE 8: Labels and emphasis (0.94-1.0)
-    tl.to(".label-rnd", { opacity: 1, scale: 1, duration: 0.02 }, 0.94)
-      .to(".label-pilot", { opacity: 1, scale: 1, duration: 0.02 }, 0.96)
-      .to(".label-mfg", { opacity: 1, scale: 1, duration: 0.02 }, 0.98);
+    // Final integrated pathway
+    tl.to(".integrated-pathway", { strokeDashoffset: 0, duration: 0.10 }, 0.90);
 
     return () => {
       tl.scrollTrigger?.kill();
@@ -127,251 +164,317 @@ export default function Segment2Architecture() {
     };
   }, []);
 
+  const showContent = currentStage !== "drawing";
+  const stage = currentStage !== "drawing" ? STAGE_CONTENT[currentStage] : null;
+
   return (
     <section
       ref={sectionRef}
-      id="capabilities"
+      id="facility"
       className="relative w-full bg-white"
-      style={{ height: "350vh" }}
+      style={{ height: "500vh" }}
     >
-      <div className="segment2-content sticky top-0 w-full h-screen flex items-center overflow-hidden">
+      <div className="segment2-sticky sticky top-0 w-full h-screen flex items-center overflow-hidden">
         <div className="w-full max-w-[1800px] mx-auto px-8 lg:px-20">
-          <div className="grid lg:grid-cols-[45%_55%] gap-16 items-center">
-            {/* LEFT: Progressive text states */}
-            <div className="relative" style={{ minHeight: "400px" }}>
-              {/* STATE 1 */}
-              <div className="seg2-state1-title absolute inset-0 flex flex-col justify-center">
+          <div className="grid lg:grid-cols-[40%_60%] gap-12 items-center">
+            
+            {/* LEFT: Content */}
+            <div className="relative z-10 space-y-6">
+              <div className="space-y-3">
+                <span className="t-label" style={{ opacity: showContent ? 1 : 0.5 }}>
+                  Animated, Interactive rendering of our facility
+                </span>
                 <h2 className="t-heading leading-tight">
-                  From Molecule<br />
-                  to Market.
+                  One Integrated Facility.<br />
+                  From Development to Delivery.
                 </h2>
               </div>
 
-              {/* STATE 2 */}
-              <div className="seg2-state2-text absolute inset-0 flex flex-col justify-center opacity-0">
-                <h3 className="t-subheading mb-6">
-                  World-class manufacturing,<br />
-                  safe and sustainable by design.
-                </h3>
-                <div className="w-16 h-px" style={{ background: "var(--color-lavender)" }} />
-              </div>
+              {/* Dynamic stage content */}
+              {showContent && stage && (
+                <div className="transition-opacity duration-500 ease-in-out">
+                  <div 
+                    className="inline-block px-4 py-2 rounded-full mb-4"
+                    style={{ 
+                      background: `${stage.color}15`,
+                      border: `2px solid ${stage.color}`,
+                    }}
+                  >
+                    <span className="font-semibold text-sm" style={{ color: stage.color }}>
+                      {stage.label}
+                    </span>
+                  </div>
 
-              {/* STATE 3 */}
-              <div className="seg2-state3-text absolute inset-0 flex flex-col justify-center opacity-0">
-                <h3 className="t-subheading mb-8">
-                  Deep expertise in complex<br />
-                  and hazardous chemistry.
-                </h3>
-                <p className="t-body max-w-lg">
-                  CMCD partners with global innovators in Agrochemicals, Pharmaceuticals and 
-                  Specialty Chemicals, providing end-to-end capabilities across development, 
-                  scale-up and commercial manufacturing.
-                </p>
-              </div>
+                  <h3 className="t-subheading mb-4" style={{ color: stage.color }}>
+                    {stage.title}
+                  </h3>
+
+                  <p className="t-body mb-6">
+                    {stage.description}
+                  </p>
+
+                  <div className="space-y-3">
+                    {stage.points.map((point, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <div 
+                          className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
+                          style={{ background: stage.color }}
+                        />
+                        <p className="text-sm" style={{ color: "var(--color-dark)" }}>
+                          {point}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* RIGHT: Facility sketch */}
-            <div className="relative">
-              <div className="seg2-facility-label mb-8 opacity-0">
-                <span className="t-label">INTEGRATED FACILITY · BERIGAI</span>
-              </div>
-
+            {/* RIGHT: Architectural Facility Sketch */}
+            <div className="relative w-full h-[600px] flex items-center justify-center">
               <svg
                 ref={svgRef}
                 viewBox="0 0 1200 800"
-                className="w-full h-auto"
-                style={{ filter: "drop-shadow(0 10px 40px rgba(37,99,235,0.06))" }}
+                className="facility-svg w-full h-full"
+                style={{ 
+                  filter: "drop-shadow(0 20px 60px rgba(37,99,235,0.08))",
+                  transformOrigin: "center center",
+                }}
               >
-                {/* CONSTRUCTION GRID - Always slightly visible */}
-                <g className="construction-grid" opacity="0.05">
-                  <line x1="0" y1="200" x2="1200" y2="200" stroke="rgba(37,99,235,0.3)" strokeWidth="0.5" />
-                  <line x1="0" y1="400" x2="1200" y2="400" stroke="rgba(37,99,235,0.3)" strokeWidth="0.5" />
-                  <line x1="0" y1="600" x2="1200" y2="600" stroke="rgba(37,99,235,0.3)" strokeWidth="0.5" />
-                  <line x1="300" y1="0" x2="300" y2="800" stroke="rgba(37,99,235,0.3)" strokeWidth="0.5" />
-                  <line x1="600" y1="0" x2="600" y2="800" stroke="rgba(37,99,235,0.3)" strokeWidth="0.5" />
-                  <line x1="900" y1="0" x2="900" y2="800" stroke="rgba(37,99,235,0.3)" strokeWidth="0.5" />
+                {/* Construction grid - subtle */}
+                <g className="construction-grid" opacity="0.04">
+                  <line x1="0" y1="200" x2="1200" y2="200" stroke="var(--color-blue)" strokeWidth="0.5" />
+                  <line x1="0" y1="400" x2="1200" y2="400" stroke="var(--color-blue)" strokeWidth="0.5" />
+                  <line x1="0" y1="600" x2="1200" y2="600" stroke="var(--color-blue)" strokeWidth="0.5" />
+                  <line x1="300" y1="0" x2="300" y2="800" stroke="var(--color-blue)" strokeWidth="0.5" />
+                  <line x1="600" y1="0" x2="600" y2="800" stroke="var(--color-blue)" strokeWidth="0.5" />
+                  <line x1="900" y1="0" x2="900" y2="800" stroke="var(--color-blue)" strokeWidth="0.5" />
                 </g>
 
-                {/* SITE OUTLINE / GROUND */}
-                <g className="site-outline">
-                  <polyline points="50,750 1150,750" fill="none" stroke="var(--color-blue)" strokeWidth="2.5" />
-                  <polyline points="50,755 1150,755" fill="none" stroke="var(--color-blue)" strokeWidth="1" opacity="0.3" />
-                  <polyline points="100,750 100,100" fill="none" stroke="rgba(37,99,235,0.2)" strokeWidth="1" />
-                  <polyline points="1100,750 1100,100" fill="none" stroke="rgba(37,99,235,0.2)" strokeWidth="1" />
+                {/* Site boundary */}
+                <g>
+                  <polyline className="site-boundary" points="80,720 1120,720" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
+                  <polyline className="site-boundary" points="100,720 100,120" fill="none" stroke="rgba(37,99,235,0.2)" strokeWidth="1" />
+                  <polyline className="site-boundary" points="1100,720 1100,120" fill="none" stroke="rgba(37,99,235,0.2)" strokeWidth="1" />
                 </g>
 
-                {/* MAIN CENTRAL PROCESS BUILDING - Large multi-story structure */}
-                <g className="building-main">
-                  {/* Central reactor building */}
-                  <polyline points="450,300 750,300 750,720 450,720 450,300" fill="none" stroke="var(--color-blue)" strokeWidth="2.5" />
-                  <rect className="building-fill" x="450" y="300" width="300" height="420" fill="var(--color-blue)" opacity="0" />
-                  
-                  {/* Floor divisions */}
-                  <polyline points="450,380 750,380" fill="none" stroke="var(--color-blue)" strokeWidth="1" opacity="0.5" />
-                  <polyline points="450,460 750,460" fill="none" stroke="var(--color-blue)" strokeWidth="1" opacity="0.5" />
-                  <polyline points="450,540 750,540" fill="none" stroke="var(--color-blue)" strokeWidth="1" opacity="0.5" />
-                  <polyline points="450,620 750,620" fill="none" stroke="var(--color-blue)" strokeWidth="1" opacity="0.5" />
-                  
-                {/* Vertical structure divisions */}
-                  <polyline points="550,300 550,720" fill="none" stroke="var(--color-blue)" strokeWidth="1" opacity="0.5" />
-                  <polyline points="650,300 650,720" fill="none" stroke="var(--color-blue)" strokeWidth="1" opacity="0.5" />
-                  
-                  {/* Internal equipment indicators */}
-                  <circle cx="500" cy="400" r="20" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" opacity="0.6" />
-                  <circle cx="600" cy="430" r="22" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" opacity="0.6" />
-                  <circle cx="700" cy="420" r="20" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" opacity="0.6" />
-                  <circle cx="550" cy="580" r="25" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" opacity="0.6" />
-                  <circle cx="650" cy="590" r="24" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" opacity="0.6" />
+                {/* Road network */}
+                <g>
+                  <polyline className="road-network" points="100,720 250,640" fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="6" strokeLinecap="round" />
+                  <polyline className="road-network" points="250,640 600,640" fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="8" strokeLinecap="round" />
+                  <polyline className="road-network" points="600,640 950,640" fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="6" strokeLinecap="round" />
+                  <polyline className="road-network" points="950,640 1100,720" fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="6" strokeLinecap="round" />
                 </g>
 
-                {/* TALL PROCESS TOWERS - Based on reference image */}
-                <g className="tower-structure">
-                  {/* Left R&D Tower Cluster */}
-                  <polyline points="220,150 280,150 280,720 220,720 220,150" fill="none" stroke="var(--color-blue)" strokeWidth="2.5" />
-                  <rect className="building-fill" x="220" y="150" width="60" height="570" fill="var(--color-blue)" opacity="0" />
-                  <ellipse cx="250" cy="150" rx="30" ry="10" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
-                  <polyline points="235,180 235,700" fill="none" stroke="var(--color-blue)" strokeWidth="0.8" opacity="0.4" />
-                  <polyline points="265,180 265,700" fill="none" stroke="var(--color-blue)" strokeWidth="0.8" opacity="0.4" />
-                  
-                  <polyline points="300,180 360,180 360,720 300,720 300,180" fill="none" stroke="var(--color-blue)" strokeWidth="2.5" />
-                  <rect className="building-fill" x="300" y="180" width="60" height="540" fill="var(--color-blue)" opacity="0" />
-                  <ellipse cx="330" cy="180" rx="30" ry="10" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
-                  <polyline points="315,210 315,700" fill="none" stroke="var(--color-blue)" strokeWidth="0.8" opacity="0.4" />
-                  <polyline points="345,210 345,700" fill="none" stroke="var(--color-blue)" strokeWidth="0.8" opacity="0.4" />
+                {/* ZONE OVERLAYS (for highlighting) */}
+                <rect className="zone-rnd-overlay" x="150" y="200" width="280" height="440" fill="var(--color-blue)" opacity="0" rx="4" />
+                <rect className="zone-scaleup-overlay" x="470" y="180" width="300" height="460" fill="var(--color-lavender)" opacity="0" rx="4" />
+                <rect className="zone-mfg-overlay" x="810" y="160" width="280" height="480" fill="var(--color-coral)" opacity="0" rx="4" />
 
-                  {/* Center Pilot/Scale-Up Tower Cluster */}
-                  <polyline points="380,120 450,120 450,720 380,720 380,120" fill="none" stroke="var(--color-lavender)" strokeWidth="2.5" />
-                  <rect className="building-fill" x="380" y="120" width="70" height="600" fill="var(--color-lavender)" opacity="0" />
-                  <ellipse cx="415" cy="120" rx="35" ry="12" fill="none" stroke="var(--color-lavender)" strokeWidth="2" />
-                  <polyline points="397,155 397,700" fill="none" stroke="var(--color-lavender)" strokeWidth="0.8" opacity="0.4" />
-                  <polyline points="433,155 433,700" fill="none" stroke="var(--color-lavender)" strokeWidth="0.8" opacity="0.4" />
+                {/* ========== R&D ZONE (LEFT) ========== */}
+                <g>
+                  {/* R&D Lab Building */}
+                  <polyline className="building-main" points="180,380 380,380 380,620 180,620 180,380" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
+                  <rect className="building-shape" x="180" y="380" width="200" height="240" fill="var(--color-blue)" opacity="0" />
+                  <polyline className="building-main" points="180,440 380,440" fill="none" stroke="var(--color-blue)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="180,500 380,500" fill="none" stroke="var(--color-blue)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="180,560 380,560" fill="none" stroke="var(--color-blue)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="250,380 250,620" fill="none" stroke="var(--color-blue)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="310,380 310,620" fill="none" stroke="var(--color-blue)" strokeWidth="0.8" opacity="0.4" />
 
-                  {/* Right Manufacturing Tower Cluster */}
-                  <polyline points="770,100 850,100 850,720 770,720 770,100" fill="none" stroke="var(--color-coral)" strokeWidth="2.5" />
-                  <rect className="building-fill" x="770" y="100" width="80" height="620" fill="var(--color-coral)" opacity="0" />
-                  <ellipse cx="810" cy="100" rx="40" ry="14" fill="none" stroke="var(--color-coral)" strokeWidth="2" />
-                  <polyline points="790,140 790,700" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.4" />
-                  <polyline points="830,140 830,700" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.4" />
-                  
-                  <polyline points="870,140 940,140 940,720 870,720 870,140" fill="none" stroke="var(--color-coral)" strokeWidth="2.5" />
-                  <rect className="building-fill" x="870" y="140" width="70" height="580" fill="var(--color-coral)" opacity="0" />
-                  <ellipse cx="905" cy="140" rx="35" ry="12" fill="none" stroke="var(--color-coral)" strokeWidth="2" />
-                  <polyline points="887,175 887,700" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.4" />
-                  <polyline points="923,175 923,700" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.4" />
-                </g>
+                  {/* R&D Process Tower */}
+                  <polyline className="tower-main" points="220,220 300,220 300,620 220,620 220,220" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
+                  <ellipse className="tower-main" cx="260" cy="220" rx="40" ry="12" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
+                  <polyline className="tower-detail" points="240,240 240,600" fill="none" stroke="var(--color-blue)" strokeWidth="0.6" opacity="0.3" />
+                  <polyline className="tower-detail" points="280,240 280,600" fill="none" stroke="var(--color-blue)" strokeWidth="0.6" opacity="0.3" />
+                  <ellipse className="tower-shape" cx="260" cy="350" rx="20" ry="30" fill="var(--color-blue)" opacity="0" />
 
-                {/* TOWER DETAILS - Platforms and equipment */}
-                <g className="tower-detail" opacity="0">
-                  <polyline points="220,350 280,350" fill="none" stroke="var(--color-blue)" strokeWidth="0.5" opacity="0.6" />
-                  <polyline points="220,500 280,500" fill="none" stroke="var(--color-blue)" strokeWidth="0.5" opacity="0.6" />
-                  <polyline points="300,380 360,380" fill="none" stroke="var(--color-blue)" strokeWidth="0.5" opacity="0.6" />
-                  <polyline points="300,530 360,530" fill="none" stroke="var(--color-blue)" strokeWidth="0.5" opacity="0.6" />
-                  
-                  <polyline points="380,320 450,320" fill="none" stroke="var(--color-lavender)" strokeWidth="0.5" opacity="0.6" />
-                  <polyline points="380,470 450,470" fill="none" stroke="var(--color-lavender)" strokeWidth="0.5" opacity="0.6" />
-                  
-                  <polyline points="770,300 850,300" fill="none" stroke="var(--color-coral)" strokeWidth="0.5" opacity="0.6" />
-                  <polyline points="770,450 850,450" fill="none" stroke="var(--color-coral)" strokeWidth="0.5" opacity="0.6" />
-                  <polyline points="870,340 940,340" fill="none" stroke="var(--color-coral)" strokeWidth="0.5" opacity="0.6" />
-                  <polyline points="870,490 940,490" fill="none" stroke="var(--color-coral)" strokeWidth="0.5" opacity="0.6" />
-                </g>
+                  {/* R&D Storage Tank */}
+                  <circle className="tank-main" cx="350" cy="540" r="50" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
+                  <polyline className="tank-main" points="350,490 350,465" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
+                  <circle className="tank-shape" cx="350" cy="540" r="50" fill="rgba(37,99,235,0.05)" opacity="0" />
 
-                {/* STORAGE TANKS */}
-                <g className="tank-structure">
-                  {/* Left tank farm */}
-                  <circle cx="150" cy="600" r="50" fill="none" stroke="var(--color-blue)" strokeWidth="2.5" />
-                  <circle cx="150" cy="600" r="50" fill="rgba(37,99,235,0.02)" opacity="0" />
-                  <polyline points="150,550 150,520" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
-                  
-                  <circle cx="130" cy="520" r="35" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
-                  <circle cx="130" cy="520" r="35" fill="rgba(37,99,235,0.02)" opacity="0" />
-                  <polyline points="130,485 130,460" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
-                  
-                  <circle cx="180" cy="510" r="40" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
-                  <circle cx="180" cy="510" r="40" fill="rgba(37,99,235,0.02)" opacity="0" />
-                  <polyline points="180,470 180,445" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
-
-                  {/* Right tank farm */}
-                  <circle cx="1000" cy="590" r="55" fill="none" stroke="var(--color-blue)" strokeWidth="2.5" />
-                  <circle cx="1000" cy="590" r="55" fill="rgba(37,99,235,0.02)" opacity="0" />
-                  <polyline points="1000,535 1000,505" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
-                  
-                  <circle cx="1070" cy="610" r="45" fill="none" stroke="var(--color-blue)" strokeWidth="2" />
-                  <circle cx="1070" cy="610" r="45" fill="rgba(37,99,235,0.02)" opacity="0" />
-                  <polyline points="1070,565 1070,540" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" />
-                </g>
-
-                {/* PIPE NETWORKS - Connecting infrastructure */}
-                <g className="pipe-network">
-                  {/* Horizontal main pipes */}
-                  <polyline points="280,400 380,380" fill="none" stroke="var(--color-lavender)" strokeWidth="4" strokeLinecap="round" />
-                  <polyline points="450,420 540,400" fill="none" stroke="var(--color-lavender)" strokeWidth="4" strokeLinecap="round" />
-                  <polyline points="660,410 770,390" fill="none" stroke="var(--color-coral)" strokeWidth="4" strokeLinecap="round" />
-                  
-                  {/* Vertical connections */}
-                  <polyline points="500,300 500,250 600,250 600,300" fill="none" stroke="var(--color-blue)" strokeWidth="3" strokeLinecap="round" />
-                  <polyline points="700,300 700,270 780,270" fill="none" stroke="var(--color-coral)" strokeWidth="3" strokeLinecap="round" />
-                  
-                  {/* Secondary connections */}
-                  <polyline points="180,510 280,480" fill="none" stroke="var(--color-blue)" strokeWidth="2.5" opacity="0.6" />
-                  <polyline points="360,550 450,520" fill="none" stroke="var(--color-lavender)" strokeWidth="2.5" opacity="0.6" />
-                  <polyline points="750,600 870,580" fill="none" stroke="var(--color-coral)" strokeWidth="2.5" opacity="0.6" />
-                  <polyline points="940,550 1000,580" fill="none" stroke="var(--color-blue)" strokeWidth="2.5" opacity="0.6" />
-                  
-                  {/* Pipe rack structure */}
-                  <polyline points="200,680 1000,680" fill="none" stroke="rgba(37,99,235,0.3)" strokeWidth="1.5" />
-                  <polyline points="200,690 1000,690" fill="none" stroke="rgba(37,99,235,0.2)" strokeWidth="1" />
-                  
-                  {/* Flow indicators */}
-                  <circle cx="330" cy="390" r="5" fill="var(--color-lavender)" opacity="0.8" />
-                  <circle cx="495" cy="410" r="5" fill="var(--color-lavender)" opacity="0.8" />
-                  <circle cx="715" cy="400" r="5" fill="var(--color-coral)" opacity="0.8" />
-                </g>
-
-                {/* SUPPORTING BUILDINGS */}
-                <g className="support-building">
-                  {/* Admin/Office buildings */}
-                  <polyline points="100,600 200,600 200,720 100,720 100,600" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" opacity="0.5" />
-                  <rect className="building-fill" x="100" y="600" width="100" height="120" fill="var(--color-blue)" opacity="0" />
-                  <polyline points="100,640 200,640" fill="none" stroke="var(--color-blue)" strokeWidth="0.5" opacity="0.3" />
-                  <polyline points="100,680 200,680" fill="none" stroke="var(--color-blue)" strokeWidth="0.5" opacity="0.3" />
-                  
-                  {/* Warehouse with blue roof */}
-                  <polyline points="960,600 1100,600 1100,720 960,720 960,600" fill="none" stroke="var(--color-blue)" strokeWidth="1.5" opacity="0.5" />
-                  <rect className="building-fill" x="960" y="600" width="140" height="120" fill="var(--color-blue)" opacity="0" />
-                  <polygon points="960,600 1030,570 1100,600" fill="rgba(37,99,235,0.15)" stroke="var(--color-blue)" strokeWidth="1" opacity="0.5" />
-                  <polyline points="960,660 1100,660" fill="none" stroke="var(--color-blue)" strokeWidth="0.5" opacity="0.3" />
-                  
-                  {/* Utility structures */}
-                  <polyline points="100,520 180,520 180,590 100,590 100,520" fill="none" stroke="var(--color-blue)" strokeWidth="1" opacity="0.4" />
-                  <polyline points="1020,500 1080,500 1080,580 1020,580 1020,500" fill="none" stroke="var(--color-blue)" strokeWidth="1" opacity="0.4" />
-                  
-                  {/* Electrical tower */}
-                  <polyline points="1100,350 1120,350 1120,720" fill="none" stroke="rgba(37,99,235,0.4)" strokeWidth="1.5" />
-                  <polyline points="1100,450 1140,450" fill="none" stroke="rgba(37,99,235,0.4)" strokeWidth="1" />
-                  <polyline points="1100,550 1140,550" fill="none" stroke="rgba(37,99,235,0.4)" strokeWidth="1" />
-                </g>
-
-                {/* ZONE LABELS */}
-                <g className="label-rnd" opacity="0" transform="scale(0.95)" style={{ transformOrigin: "280px 80px" }}>
-                  <rect x="200" y="60" width="160" height="40" fill="white" stroke="var(--color-blue)" strokeWidth="2" rx="4" />
-                  <text x="280" y="87" textAnchor="middle" fill="var(--color-blue)" fontSize="16" fontWeight="700">
+                  {/* R&D Label */}
+                  <text className="rnd-label" x="280" y="690" textAnchor="middle" fill="var(--color-blue)" fontSize="16" fontWeight="600" opacity="0">
                     R&D
                   </text>
                 </g>
 
-                <g className="label-pilot" opacity="0" transform="scale(0.95)" style={{ transformOrigin: "600px 50px" }}>
-                  <rect x="480" y="30" width="240" height="40" fill="white" stroke="var(--color-lavender)" strokeWidth="2" rx="4" />
-                  <text x="600" y="57" textAnchor="middle" fill="var(--color-lavender)" fontSize="16" fontWeight="700">
-                    PILOT / SCALE-UP
+                {/* ========== SCALE-UP ZONE (CENTER) ========== */}
+                <g>
+                  {/* Pilot Plant Building */}
+                  <polyline className="building-main" points="500,320 720,320 720,620 500,620 500,320" fill="none" stroke="var(--color-lavender)" strokeWidth="2" />
+                  <rect className="building-shape" x="500" y="320" width="220" height="300" fill="var(--color-lavender)" opacity="0" />
+                  <polyline className="building-main" points="500,380 720,380" fill="none" stroke="var(--color-lavender)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="500,440 720,440" fill="none" stroke="var(--color-lavender)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="500,500 720,500" fill="none" stroke="var(--color-lavender)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="500,560 720,560" fill="none" stroke="var(--color-lavender)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="580,320 580,620" fill="none" stroke="var(--color-lavender)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="640,320 640,620" fill="none" stroke="var(--color-lavender)" strokeWidth="0.8" opacity="0.4" />
+
+                  {/* Pilot Reactor Tower */}
+                  <polyline className="tower-main" points="540,180 620,180 620,620 540,620 540,180" fill="none" stroke="var(--color-lavender)" strokeWidth="2" />
+                  <ellipse className="tower-main" cx="580" cy="180" rx="40" ry="12" fill="none" stroke="var(--color-lavender)" strokeWidth="1.5" />
+                  <polyline className="tower-detail" points="560,200 560,600" fill="none" stroke="var(--color-lavender)" strokeWidth="0.6" opacity="0.3" />
+                  <polyline className="tower-detail" points="600,200 600,600" fill="none" stroke="var(--color-lavender)" strokeWidth="0.6" opacity="0.3" />
+                  <ellipse className="tower-shape" cx="580" cy="320" rx="22" ry="35" fill="var(--color-lavender)" opacity="0" />
+
+                  {/* Scale-up Process Tower 2 */}
+                  <polyline className="tower-main" points="660,200 730,200 730,620 660,620 660,200" fill="none" stroke="var(--color-lavender)" strokeWidth="2" />
+                  <ellipse className="tower-main" cx="695" cy="200" rx="35" ry="10" fill="none" stroke="var(--color-lavender)" strokeWidth="1.5" />
+                  <polyline className="tower-detail" points="678,215 678,600" fill="none" stroke="var(--color-lavender)" strokeWidth="0.6" opacity="0.3" />
+                  <polyline className="tower-detail" points="712,215 712,600" fill="none" stroke="var(--color-lavender)" strokeWidth="0.6" opacity="0.3" />
+
+                  {/* Scale-up Tanks */}
+                  <circle className="tank-main" cx="480" cy="550" r="40" fill="none" stroke="var(--color-lavender)" strokeWidth="2" />
+                  <polyline className="tank-main" points="480,510 480,490" fill="none" stroke="var(--color-lavender)" strokeWidth="1.5" />
+                  <circle className="tank-shape" cx="480" cy="550" r="40" fill="rgba(167,139,250,0.05)" opacity="0" />
+
+                  {/* Scale-up Label */}
+                  <text className="scaleup-label" x="610" y="690" textAnchor="middle" fill="var(--color-lavender)" fontSize="16" fontWeight="600" opacity="0">
+                    SCALE-UP
                   </text>
                 </g>
 
-                <g className="label-mfg" opacity="0" transform="scale(0.95)" style={{ transformOrigin: "860px 40px" }}>
-                  <rect x="740" y="20" width="240" height="40" fill="white" stroke="var(--color-coral)" strokeWidth="2" rx="4" />
-                  <text x="860" y="47" textAnchor="middle" fill="var(--color-coral)" fontSize="16" fontWeight="700">
+                {/* ========== MANUFACTURING ZONE (RIGHT) ========== */}
+                <g>
+                  {/* Manufacturing Building 1 */}
+                  <polyline className="building-main" points="840,280 1020,280 1020,620 840,620 840,280" fill="none" stroke="var(--color-coral)" strokeWidth="2" />
+                  <rect className="building-shape" x="840" y="280" width="180" height="340" fill="var(--color-coral)" opacity="0" />
+                  <polyline className="building-main" points="840,340 1020,340" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="840,400 1020,400" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="840,460 1020,460" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="840,520 1020,520" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="905,280 905,620" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.4" />
+                  <polyline className="building-main" points="965,280 965,620" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.4" />
+
+                  {/* Large Manufacturing Tower 1 */}
+                  <polyline className="tower-main" points="870,150 950,150 950,620 870,620 870,150" fill="none" stroke="var(--color-coral)" strokeWidth="2.5" />
+                  <ellipse className="tower-main" cx="910" cy="150" rx="40" ry="12" fill="none" stroke="var(--color-coral)" strokeWidth="2" />
+                  <polyline className="tower-detail" points="890,170 890,600" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.3" />
+                  <polyline className="tower-detail" points="930,170 930,600" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.3" />
+                  <ellipse className="tower-shape" cx="910" cy="300" rx="25" ry="40" fill="var(--color-coral)" opacity="0" />
+
+                  {/* Large Manufacturing Tower 2 */}
+                  <polyline className="tower-main" points="970,170 1040,170 1040,620 970,620 970,170" fill="none" stroke="var(--color-coral)" strokeWidth="2.5" />
+                  <ellipse className="tower-main" cx="1005" cy="170" rx="35" ry="10" fill="none" stroke="var(--color-coral)" strokeWidth="2" />
+                  <polyline className="tower-detail" points="988,185 988,600" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.3" />
+                  <polyline className="tower-detail" points="1022,185 1022,600" fill="none" stroke="var(--color-coral)" strokeWidth="0.8" opacity="0.3" />
+
+                  {/* Manufacturing Storage Tanks */}
+                  <circle className="tank-main" cx="1060" cy="500" r="55" fill="none" stroke="var(--color-coral)" strokeWidth="2.5" />
+                  <polyline className="tank-main" points="1060,445 1060,420" fill="none" stroke="var(--color-coral)" strokeWidth="2" />
+                  <circle className="tank-shape" cx="1060" cy="500" r="55" fill="rgba(251,113,133,0.05)" opacity="0" />
+
+                  <circle className="tank-main" cx="820" cy="540" r="45" fill="none" stroke="var(--color-coral)" strokeWidth="2" />
+                  <polyline className="tank-main" points="820,495 820,475" fill="none" stroke="var(--color-coral)" strokeWidth="1.5" />
+                  <circle className="tank-shape" cx="820" cy="540" r="45" fill="rgba(251,113,133,0.05)" opacity="0" />
+
+                  {/* Manufacturing Label */}
+                  <text className="mfg-label" x="930" y="690" textAnchor="middle" fill="var(--color-coral)" fontSize="16" fontWeight="600" opacity="0">
                     MANUFACTURING
                   </text>
+                </g>
+
+                {/* ========== PIPE NETWORKS (CONNECTING ZONES) ========== */}
+                <g>
+                  {/* R&D to Scale-up pipes */}
+                  <polyline className="pipe-network" points="380,450 500,420" fill="none" stroke="var(--color-lavender)" strokeWidth="4" strokeLinecap="round" opacity="0.6" />
+                  <polyline className="pipe-network" points="350,490 480,480" fill="none" stroke="var(--color-blue)" strokeWidth="3" strokeLinecap="round" opacity="0.5" />
+                  
+                  {/* Scale-up to Manufacturing pipes */}
+                  <polyline className="pipe-network" points="720,400 840,380" fill="none" stroke="var(--color-coral)" strokeWidth="4" strokeLinecap="round" opacity="0.6" />
+                  <polyline className="pipe-network" points="730,500 820,495" fill="none" stroke="var(--color-lavender)" strokeWidth="3" strokeLinecap="round" opacity="0.5" />
+                  
+                  {/* Overhead pipes */}
+                  <polyline className="pipe-network" points="300,220 540,180" fill="none" stroke="var(--color-blue)" strokeWidth="2.5" strokeLinecap="round" opacity="0.4" />
+                  <polyline className="pipe-network" points="620,180 870,150" fill="none" stroke="var(--color-lavender)" strokeWidth="2.5" strokeLinecap="round" opacity="0.4" />
+                </g>
+
+                {/* ========== SUPPORTING STRUCTURES ========== */}
+                <g>
+                  {/* Control room */}
+                  <polyline className="support-structure" points="140,500 220,500 220,620 140,620 140,500" fill="none" stroke="var(--color-blue)" strokeWidth="1.2" opacity="0.5" />
+                  <polyline className="support-structure" points="140,550 220,550" fill="none" stroke="var(--color-blue)" strokeWidth="0.5" opacity="0.3" />
+                  
+                  {/* Utility building */}
+                  <polyline className="support-structure" points="750,540 820,540 820,620 750,620 750,540" fill="none" stroke="var(--color-blue)" strokeWidth="1.2" opacity="0.5" />
+                  <polygon className="support-structure" points="750,540 785,520 820,540" fill="rgba(37,99,235,0.05)" stroke="var(--color-blue)" strokeWidth="0.8" />
+                  
+                  {/* Warehouse */}
+                  <polyline className="support-structure" points="1040,540 1100,540 1100,620 1040,620 1040,540" fill="none" stroke="var(--color-blue)" strokeWidth="1.2" opacity="0.5" />
+                  <polyline className="support-structure" points="1040,580 1100,580" fill="none" stroke="var(--color-blue)" strokeWidth="0.5" opacity="0.3" />
+                </g>
+
+                {/* ========== CONNECTING PATHS (Stage-specific) ========== */}
+                <g>
+                  {/* R&D connection path */}
+                  <path 
+                    className="connecting-path-rnd"
+                    d="M 260,640 L 260,680"
+                    fill="none"
+                    stroke="var(--color-blue)"
+                    strokeWidth="3"
+                    strokeDasharray="50"
+                    strokeDashoffset="50"
+                    opacity="0.8"
+                  />
+                  
+                  {/* Scale-up connection path */}
+                  <path 
+                    className="connecting-path-scaleup"
+                    d="M 580,640 L 580,680"
+                    fill="none"
+                    stroke="var(--color-lavender)"
+                    strokeWidth="3"
+                    strokeDasharray="50"
+                    strokeDashoffset="50"
+                    opacity="0.8"
+                  />
+                  
+                  {/* Manufacturing connection path */}
+                  <path 
+                    className="connecting-path-mfg"
+                    d="M 910,640 L 910,680"
+                    fill="none"
+                    stroke="var(--color-coral)"
+                    strokeWidth="3"
+                    strokeDasharray="50"
+                    strokeDashoffset="50"
+                    opacity="0.8"
+                  />
+                  
+                  {/* Integrated pathway showing full flow */}
+                  <path 
+                    className="integrated-pathway"
+                    d="M 260,700 Q 440,695 580,700 Q 750,705 910,700"
+                    fill="none"
+                    stroke="url(#gradient-flow)"
+                    strokeWidth="4"
+                    strokeDasharray="500"
+                    strokeDashoffset="500"
+                    opacity="0.6"
+                  />
+                </g>
+
+                {/* Gradient definition for integrated pathway */}
+                <defs>
+                  <linearGradient id="gradient-flow" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="var(--color-blue)" />
+                    <stop offset="50%" stopColor="var(--color-lavender)" />
+                    <stop offset="100%" stopColor="var(--color-coral)" />
+                  </linearGradient>
+                </defs>
+
+                {/* Molecular accent decorations */}
+                <g opacity="0.3">
+                  <circle cx="120" cy="260" r="3" fill="var(--color-blue)" />
+                  <circle cx="160" cy="240" r="3" fill="var(--color-blue)" />
+                  <line x1="120" y1="260" x2="160" y2="240" stroke="var(--color-blue)" strokeWidth="0.8" />
+                  
+                  <circle cx="1080" cy="280" r="3" fill="var(--color-coral)" />
+                  <circle cx="1120" cy="260" r="3" fill="var(--color-coral)" />
+                  <line x1="1080" y1="280" x2="1120" y2="260" stroke="var(--color-coral)" strokeWidth="0.8" />
                 </g>
               </svg>
             </div>
