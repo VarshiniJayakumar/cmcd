@@ -24,7 +24,7 @@ interface Particle {
 }
 
 interface Props {
-  sectionRef: React.RefObject<HTMLElement>;
+  sectionRef: React.RefObject<HTMLElement | null>;
 }
 
 export default function MolecularCanvas({ sectionRef }: Props) {
@@ -130,15 +130,17 @@ export default function MolecularCanvas({ sectionRef }: Props) {
 
     // Scroll tracking
     initGSAP();
-    ScrollTrigger.create({
-      trigger: sectionRef.current,
-      start: "top top",
-      end: "bottom top",
-      scrub: true,
-      onUpdate: (self) => {
-        progressRef.current = self.progress;
-      },
-    });
+    if (sectionRef.current) {
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "bottom top",
+        scrub: true,
+        onUpdate: (self) => {
+          progressRef.current = self.progress;
+        },
+      });
+    }
 
     window.addEventListener("resize", setSize);
 
