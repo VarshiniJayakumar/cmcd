@@ -371,7 +371,7 @@ export default function Segment2Architecture() {
                   <circle className="tank-shape" cx="820" cy="540" r="45" fill="rgba(251,113,133,0.05)" opacity="0" />
 
                   {/* Manufacturing Label */}
-                  <text className="mfg-label" x="930" y="690" textAnchor="middle" fill="var(--color-coral)" fontSize="16" fontWeight="600" opacity="0">
+                  <text className="mfg-label" x="950" y="690" textAnchor="middle" fill="var(--color-coral)" fontSize="16" fontWeight="600" opacity="0">
                     MANUFACTURING
                   </text>
                 </g>
