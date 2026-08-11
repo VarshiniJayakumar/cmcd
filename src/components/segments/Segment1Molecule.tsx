@@ -73,7 +73,13 @@ export default function Segment1Molecule() {
     canvas.addEventListener("mousemove", onMouseMove);
     window.addEventListener("resize", setSize);
 
-    // Scroll animation - extended timeline
+    // Initial page load entrance (NOT scroll-based)
+    const entranceTl = gsap.timeline({ delay: 0.3 });
+    entranceTl.fromTo(".seg1-main-title", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" })
+      .fromTo(".seg1-subtitle", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, "-=0.6")
+      .fromTo(".seg1-process-flow", { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, "-=0.6");
+
+    // Scroll animation - transition out
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: section,
@@ -84,13 +90,8 @@ export default function Segment1Molecule() {
       },
     });
 
-    // Initial hero appears
-    tl.fromTo(".seg1-main-title", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.2 })
-      .fromTo(".seg1-subtitle", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.2 }, "-=0.1")
-      .fromTo(".seg1-process-flow", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.15 }, "-=0.05")
-      // Hold visible state
-      .to({}, { duration: 0.25 })
-      // Fade to transition
+    // Hero stays visible (0-0.3), then transitions out (0.3-0.5)
+    tl.to({}, { duration: 0.3 })
       .to(".seg1-main-title", { opacity: 0, y: -60, duration: 0.2 })
       .to(".seg1-subtitle", { opacity: 0, y: -40, duration: 0.2 }, "-=0.15")
       .to(".seg1-process-flow", { opacity: 0, y: -30, duration: 0.15 }, "-=0.15");
@@ -195,6 +196,7 @@ export default function Segment1Molecule() {
       window.removeEventListener("resize", setSize);
       tl.scrollTrigger?.kill();
       tl.kill();
+      entranceTl.kill();
     };
   }, []);
 
@@ -238,6 +240,14 @@ export default function Segment1Molecule() {
               <path d="M5 12h14m0 0l-6-6m6 6l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             <span style={{ color: "var(--color-coral)" }}>MANUFACTURING</span>
+          </div>
+
+          {/* Scroll indicator */}
+          <div className="seg1-process-flow mt-20 flex flex-col items-center gap-2" style={{ color: "var(--color-muted)" }}>
+            <span className="text-xs uppercase tracking-wider">Scroll to explore</span>
+            <svg width="20" height="30" viewBox="0 0 20 30" fill="none">
+              <path d="M10 5v20m0 0l-5-5m5 5l5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
         </div>
       </div>
