@@ -139,42 +139,42 @@ export default function Segment4AboutNumbers() {
     <section
       ref={sectionRef}
       id="about"
-      className="relative w-full py-24 lg:py-32"
+      className="relative w-full py-16 sm:py-24 lg:py-32"
       style={{ 
         background: "linear-gradient(180deg, #fafaf9 0%, #ffffff 100%)",
       }}
     >
-      <div className="w-full max-w-[1800px] mx-auto px-8 lg:px-20">
-        <div className="grid lg:grid-cols-2 gap-20 items-start">
+      <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-20">
+        <div className="grid lg:grid-cols-2 gap-12 sm:gap-16 lg:gap-20 items-start">
           
           {/* ========== LEFT: ABOUT US ========== */}
-          <div className="space-y-8">
-            <div className="about-heading space-y-4 opacity-0">
-              <span className="t-label">About Us</span>
+          <div className="space-y-6 sm:space-y-8">
+            <div className="about-heading space-y-3 sm:space-y-4 opacity-0">
+              <span className="t-label text-xs sm:text-sm">About Us</span>
               
-              <h2 className="t-heading leading-tight">
+              <h2 className="t-heading leading-tight text-2xl sm:text-3xl lg:text-4xl">
                 Chemistry Built on Capability,<br />
                 Partnership Built on Trust.
               </h2>
             </div>
 
             <div 
-              className="w-20 h-px" 
+              className="w-16 sm:w-20 h-px" 
               style={{ background: "linear-gradient(90deg, var(--color-blue) 0%, transparent 100%)" }} 
             />
 
-            <div className="about-content space-y-5 max-w-xl opacity-0">
-              <p className="t-body-large">
+            <div className="about-content space-y-4 sm:space-y-5 max-w-xl opacity-0">
+              <p className="t-body-large text-sm sm:text-base">
                 CMCD partners with global innovators in the Agrochemicals, Pharmaceuticals and 
                 Specialty Chemicals sectors, providing end-to-end capabilities across development, 
                 scale-up and commercial manufacturing.
               </p>
-              <p className="t-body-large">
+              <p className="t-body-large text-sm sm:text-base">
                 At our integrated Berigai facility near Bengaluru, R&D, pilot and commercial 
                 manufacturing capabilities are co-located, enabling a seamless transition from 
                 development to scale.
               </p>
-              <p className="t-body-large">
+              <p className="t-body-large text-sm sm:text-base">
                 With 900 m³ of reactor capacity and expertise in handling a wide range of hazardous 
                 chemistries, we combine technical capability with the operational discipline required 
                 for reliable commercial supply.
@@ -182,7 +182,7 @@ export default function Segment4AboutNumbers() {
             </div>
 
             {/* Subtle technical accent */}
-            <div className="about-content pt-4 opacity-0">
+            <div className="about-content pt-4 opacity-0 hidden sm:block">
               <svg width="180" height="60" viewBox="0 0 180 60" className="opacity-10">
                 <line x1="0" y1="30" x2="50" y2="30" stroke="var(--color-blue)" strokeWidth="1" />
                 <circle cx="50" cy="30" r="3" fill="var(--color-blue)" />
@@ -199,11 +199,11 @@ export default function Segment4AboutNumbers() {
           </div>
 
           {/* ========== RIGHT: OUR STORY IN NUMBERS - ALL 6 METRICS VISIBLE ========== */}
-          <div className="space-y-10">
+          <div className="space-y-8 sm:space-y-10">
             
             {/* Header with instructional subtext */}
             <div className="numbers-header opacity-0 text-center lg:text-left">
-              <span className="t-label block mb-2">Our Story in Numbers</span>
+              <span className="t-label block mb-2 text-xs sm:text-sm">Our Story in Numbers</span>
               <p 
                 className="text-xs tracking-wider uppercase font-medium"
                 style={{ 
@@ -215,8 +215,8 @@ export default function Segment4AboutNumbers() {
               </p>
             </div>
 
-            {/* 2x3 Grid of Metrics */}
-            <div className="grid grid-cols-2 gap-6 lg:gap-8">
+            {/* 2x3 Grid of Metrics - Responsive to single column on smallest screens */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
               {METRICS.map((metric, i) => {
                 const isActive = activeIndex === i;
                 const isOther = activeIndex !== null && activeIndex !== i;
@@ -225,7 +225,7 @@ export default function Segment4AboutNumbers() {
                   <button
                     key={i}
                     type="button"
-                    className="metric-card opacity-0 relative p-6 lg:p-8 rounded-xl border-2 cursor-pointer overflow-hidden text-left"
+                    className="metric-card opacity-0 relative p-5 sm:p-6 lg:p-8 rounded-xl border-2 cursor-pointer overflow-hidden text-left w-full"
                     style={{
                       borderColor: isActive ? metric.color : "rgba(0,0,0,0.08)",
                       background: isActive ? `${metric.color}05` : "rgba(255,255,255,0.95)",
@@ -237,6 +237,7 @@ export default function Segment4AboutNumbers() {
                         ? `0 16px 48px -12px ${metric.color}40, 0 0 0 1px ${metric.color}20` 
                         : "0 2px 12px rgba(0,0,0,0.04)",
                       transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                      minHeight: isActive ? "auto" : "140px",
                     }}
                     onClick={() => handleCardClick(i)}
                     aria-pressed={isActive}
@@ -244,10 +245,10 @@ export default function Segment4AboutNumbers() {
                   >
                     {/* Clickable indicator - top right corner */}
                     <div 
-                      className="absolute top-3 right-3 flex items-center justify-center"
+                      className="absolute top-2 right-2 sm:top-3 sm:right-3 flex items-center justify-center"
                       style={{
-                        width: "24px",
-                        height: "24px",
+                        width: "20px",
+                        height: "20px",
                         borderRadius: "50%",
                         border: `1.5px solid ${isActive ? metric.color : "rgba(0,0,0,0.15)"}`,
                         background: isActive ? `${metric.color}15` : "transparent",
@@ -255,8 +256,8 @@ export default function Segment4AboutNumbers() {
                       }}
                     >
                       <svg 
-                        width="10" 
-                        height="10" 
+                        width="8" 
+                        height="8" 
                         viewBox="0 0 10 10"
                         style={{
                           transform: isActive ? "rotate(180deg)" : "rotate(0deg)",
@@ -287,10 +288,10 @@ export default function Segment4AboutNumbers() {
                       }}
                     />
 
-                    <div className="relative z-10 text-center space-y-4">
+                    <div className="relative z-10 text-center space-y-3 sm:space-y-4">
                       {/* Large Number */}
                       <div
-                        className="text-5xl lg:text-6xl font-extralight leading-none tracking-tight"
+                        className="text-4xl sm:text-5xl lg:text-6xl font-extralight leading-none tracking-tight"
                         style={{ 
                           color: isActive ? metric.color : "var(--color-dark)",
                           transform: isActive ? "scale(1.05)" : "scale(1)",
@@ -298,12 +299,12 @@ export default function Segment4AboutNumbers() {
                         }}
                       >
                         <span ref={el => { numberRefs.current[i] = el; }}>0</span>
-                        <span className="text-4xl lg:text-5xl">{metric.suffix}</span>
+                        <span className="text-3xl sm:text-4xl lg:text-5xl">{metric.suffix}</span>
                       </div>
                       
                       {/* Label */}
                       <h4 
-                        className="text-sm lg:text-base font-semibold tracking-wide leading-tight" 
+                        className="text-xs sm:text-sm lg:text-base font-semibold tracking-wide leading-tight" 
                         style={{ 
                           color: isActive ? metric.color : "var(--color-dark)",
                           transform: isActive ? "translateY(-4px)" : "translateY(0)",
@@ -344,9 +345,9 @@ export default function Segment4AboutNumbers() {
 
                     {/* Corner technical accent */}
                     <svg 
-                      className="absolute bottom-3 left-3"
-                      width="20" 
-                      height="20" 
+                      className="absolute bottom-2 left-2 sm:bottom-3 sm:left-3"
+                      width="16" 
+                      height="16" 
                       viewBox="0 0 20 20"
                       style={{
                         opacity: isActive ? 0.4 : 0.1,
@@ -362,8 +363,8 @@ export default function Segment4AboutNumbers() {
               })}
             </div>
 
-            {/* Subtle background technical visualization */}
-            <div className="relative -mt-4 opacity-5 pointer-events-none">
+            {/* Subtle background technical visualization - hidden on mobile */}
+            <div className="relative -mt-4 opacity-5 pointer-events-none hidden lg:block">
               <svg width="100%" height="200" viewBox="0 0 600 200">
                 <line x1="0" y1="50" x2="600" y2="50" stroke="var(--color-blue)" strokeWidth="0.5" />
                 <line x1="0" y1="100" x2="600" y2="100" stroke="var(--color-blue)" strokeWidth="0.5" />

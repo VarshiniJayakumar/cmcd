@@ -175,16 +175,16 @@ export default function Segment2Architecture() {
       style={{ height: "500vh" }}
     >
       <div className="segment2-sticky sticky top-0 w-full h-screen flex items-center overflow-hidden">
-        <div className="w-full max-w-[1800px] mx-auto px-8 lg:px-20">
-          <div className="grid lg:grid-cols-[40%_60%] gap-12 items-center">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-20">
+          <div className="grid lg:grid-cols-[40%_60%] gap-8 lg:gap-12 items-center">
             
             {/* LEFT: Content */}
-            <div className="relative z-10 space-y-6">
-              <div className="space-y-3">
-                <span className="t-label" style={{ opacity: showContent ? 1 : 0.5 }}>
+            <div className="relative z-10 space-y-4 sm:space-y-6">
+              <div className="space-y-2 sm:space-y-3">
+                <span className="t-label text-xs sm:text-sm" style={{ opacity: showContent ? 1 : 0.5 }}>
                   Animated, Interactive rendering of our facility
                 </span>
-                <h2 className="t-heading leading-tight">
+                <h2 className="t-heading leading-tight text-2xl sm:text-3xl lg:text-4xl">
                   One Integrated Facility.<br />
                   From Development to Delivery.
                 </h2>
@@ -194,33 +194,33 @@ export default function Segment2Architecture() {
               {showContent && stage && (
                 <div className="transition-opacity duration-500 ease-in-out">
                   <div 
-                    className="inline-block px-4 py-2 rounded-full mb-4"
+                    className="inline-block px-3 py-1.5 sm:px-4 sm:py-2 rounded-full mb-3 sm:mb-4"
                     style={{ 
                       background: `${stage.color}15`,
                       border: `2px solid ${stage.color}`,
                     }}
                   >
-                    <span className="font-semibold text-sm" style={{ color: stage.color }}>
+                    <span className="font-semibold text-xs sm:text-sm" style={{ color: stage.color }}>
                       {stage.label}
                     </span>
                   </div>
 
-                  <h3 className="t-subheading mb-4" style={{ color: stage.color }}>
+                  <h3 className="t-subheading mb-3 sm:mb-4 text-lg sm:text-xl" style={{ color: stage.color }}>
                     {stage.title}
                   </h3>
 
-                  <p className="t-body mb-6">
+                  <p className="t-body mb-4 sm:mb-6 text-sm sm:text-base">
                     {stage.description}
                   </p>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {stage.points.map((point, i) => (
-                      <div key={i} className="flex items-start gap-3">
+                      <div key={i} className="flex items-start gap-2 sm:gap-3">
                         <div 
                           className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
                           style={{ background: stage.color }}
                         />
-                        <p className="text-sm" style={{ color: "var(--color-dark)" }}>
+                        <p className="text-xs sm:text-sm" style={{ color: "var(--color-dark)" }}>
                           {point}
                         </p>
                       </div>
@@ -231,14 +231,16 @@ export default function Segment2Architecture() {
             </div>
 
             {/* RIGHT: Architectural Facility Sketch */}
-            <div className="relative w-full h-[600px] flex items-center justify-center">
+            <div className="relative w-full h-[300px] sm:h-[400px] lg:h-[600px] flex items-center justify-center">
               <svg
                 ref={svgRef}
                 viewBox="0 0 1200 800"
                 className="facility-svg w-full h-full"
+                preserveAspectRatio="xMidYMid meet"
                 style={{ 
-                  filter: "drop-shadow(0 20px 60px rgba(37,99,235,0.08))",
+                  filter: "drop-shadow(0 10px 30px rgba(37,99,235,0.06))",
                   transformOrigin: "center center",
+                  maxWidth: "100%",
                 }}
               >
                 {/* Construction grid - subtle */}

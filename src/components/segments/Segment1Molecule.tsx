@@ -89,16 +89,16 @@ export default function Segment1Molecule() {
       style={{ height: "200vh" }}
     >
       <div className="segment1-content sticky top-0 w-full h-screen flex items-center">
-        <div className="w-full max-w-[1800px] mx-auto px-8 lg:px-20">
-          <div className="grid lg:grid-cols-[45%_55%] gap-16 items-center">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-20">
+          <div className="grid lg:grid-cols-[45%_55%] gap-8 lg:gap-16 items-center">
             
             {/* LEFT: Content */}
-            <div className="relative z-10 space-y-6" style={{ paddingTop: "120px" }}>
+            <div className="relative z-10 space-y-4 sm:space-y-6" style={{ paddingTop: "clamp(80px, 15vh, 120px)" }}>
               <span className="seg1-label t-label">What does CMCD offer clients?</span>
               
-              <div className="seg1-main-title space-y-3" style={{ maxWidth: "600px" }}>
+              <div className="seg1-main-title space-y-2 sm:space-y-3">
                 <h1 style={{
-                  fontSize: "clamp(3rem, 5vw, 4.5rem)",
+                  fontSize: "clamp(2rem, 8vw, 4.5rem)",
                   fontWeight: 300,
                   letterSpacing: "-0.03em",
                   lineHeight: 0.95,
@@ -108,7 +108,7 @@ export default function Segment1Molecule() {
                   TO MARKET.
                 </h1>
                 <h2 style={{
-                  fontSize: "clamp(3rem, 5vw, 4.5rem)",
+                  fontSize: "clamp(2rem, 8vw, 4.5rem)",
                   fontWeight: 300,
                   letterSpacing: "-0.03em",
                   lineHeight: 0.95,
@@ -121,23 +121,24 @@ export default function Segment1Molecule() {
                 </h2>
               </div>
 
-              <div className="seg1-content-text space-y-4 max-w-xl" style={{ paddingTop: "8px" }}>
-                <p className="t-body-large">
+              <div className="seg1-content-text space-y-3 sm:space-y-4 max-w-xl" style={{ paddingTop: "8px" }}>
+                <p className="t-body-large text-sm sm:text-base">
                   World-class manufacturing, safe and sustainable by design, built to support 
                   your innovation lifecycle.
                 </p>
-                <p className="t-body-large">
+                <p className="t-body-large text-sm sm:text-base">
                   Deep expertise in complex and hazardous chemistry, backed by a proven safety record.
                 </p>
               </div>
             </div>
 
             {/* RIGHT: Berigai Facility Sketch */}
-            <div className="relative">
+            <div className="relative w-full max-w-full">
               <svg
                 ref={svgRef}
                 viewBox="0 0 1200 900"
-                className="w-full h-auto"
+                className="w-full h-auto max-h-[60vh] sm:max-h-[70vh] lg:max-h-none"
+                preserveAspectRatio="xMidYMid meet"
                 style={{ filter: "drop-shadow(0 10px 40px rgba(37,99,235,0.04))" }}
               >
                 {/* Faint construction grid */}
