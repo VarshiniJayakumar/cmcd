@@ -27,7 +27,7 @@ export default function Segment1Molecule() {
     };
     setSize();
 
-    // Molecular nodes
+    // Molecular nodes with purposeful positioning
     interface Node {
       x: number;
       y: number;
@@ -35,29 +35,32 @@ export default function Segment1Molecule() {
       vy: number;
       r: number;
       connections: number[];
+      stage: number; // 0=molecule, 1=R&D, 2=scale-up, 3=mfg
     }
 
     const nodes: Node[] = [];
-    for (let i = 0; i < 80; i++) {
-      const angle = (i / 80) * Math.PI * 2 + Math.random() * 0.3;
-      const ring = Math.floor(i / 20);
-      const radius = 100 + ring * 90 + Math.random() * 40;
+    for (let i = 0; i < 60; i++) {
+      const stage = i % 4;
+      const stageX = stage * (W / 4) + W / 8;
+      const angle = (i / 15) * Math.PI * 2 + Math.random() * 0.4;
+      const radius = 60 + Math.random() * 50;
       nodes.push({
-        x: W / 2 + Math.cos(angle) * radius,
+        x: stageX + Math.cos(angle) * radius,
         y: H / 2 + Math.sin(angle) * radius,
-        vx: (Math.random() - 0.5) * 0.25,
-        vy: (Math.random() - 0.5) * 0.25,
-        r: 2 + Math.random() * 2.5,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2,
+        r: 2.5 + Math.random() * 2,
         connections: [],
+        stage,
       });
     }
 
     nodes.forEach((node, i) => {
       const nearby = nodes
         .map((n, j) => ({ j, d: Math.hypot(n.x - node.x, n.y - node.y) }))
-        .filter(({ j, d }) => j !== i && d < 150)
+        .filter(({ j, d }) => j !== i && d < 120)
         .sort((a, b) => a.d - b.d)
-        .slice(0, 3);
+        .slice(0, 2);
       nearby.forEach(({ j }) => node.connections.push(j));
     });
 
@@ -70,7 +73,7 @@ export default function Segment1Molecule() {
     canvas.addEventListener("mousemove", onMouseMove);
     window.addEventListener("resize", setSize);
 
-    // Scroll animation
+    // Scroll animation - extended timeline
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: section,
@@ -81,11 +84,16 @@ export default function Segment1Molecule() {
       },
     });
 
-    // Animate text
-    tl.fromTo(".seg1-title", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 0.3 })
-      .fromTo(".seg1-subtitle", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.3 }, "-=0.1")
-      .to(".seg1-title", { opacity: 0, y: -40, duration: 0.3 }, 0.7)
-      .to(".seg1-subtitle", { opacity: 0, y: -40, duration: 0.3 }, 0.7);
+    // Initial hero appears
+    tl.fromTo(".seg1-main-title", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.2 })
+      .fromTo(".seg1-subtitle", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.2 }, "-=0.1")
+      .fromTo(".seg1-process-flow", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.15 }, "-=0.05")
+      // Hold visible state
+      .to({}, { duration: 0.25 })
+      // Fade to transition
+      .to(".seg1-main-title", { opacity: 0, y: -60, duration: 0.2 })
+      .to(".seg1-subtitle", { opacity: 0, y: -40, duration: 0.2 }, "-=0.15")
+      .to(".seg1-process-flow", { opacity: 0, y: -30, duration: 0.15 }, "-=0.15");
 
     // Canvas animation loop
     let frame = 0;
@@ -96,34 +104,27 @@ export default function Segment1Molecule() {
 
       ctx.clearRect(0, 0, W, H);
 
-      // Background gradient
-      const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)/2);
-      grad.addColorStop(0, "rgba(37,99,235,0.04)");
-      grad.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
-
       // Update nodes
       nodes.forEach((node) => {
         node.x += node.vx;
         node.y += node.vy;
 
-        // Mouse attraction
+        // Gentle mouse attraction
         const dx = mouseX * W - node.x;
         const dy = mouseY * H - node.y;
         const dist = Math.hypot(dx, dy);
-        if (dist < 180) {
-          const force = (1 - dist / 180) * 0.25;
-          node.x += dx * force * 0.015;
-          node.y += dy * force * 0.015;
+        if (dist < 200) {
+          const force = (1 - dist / 200) * 0.18;
+          node.x += dx * force * 0.012;
+          node.y += dy * force * 0.012;
         }
 
         // Boundaries
-        const margin = 80;
-        if (node.x < margin) node.vx += 0.03;
-        if (node.x > W - margin) node.vx -= 0.03;
-        if (node.y < margin) node.vy += 0.03;
-        if (node.y > H - margin) node.vy -= 0.03;
+        const margin = 100;
+        if (node.x < margin) node.vx += 0.025;
+        if (node.x > W - margin) node.vx -= 0.025;
+        if (node.y < margin) node.vy += 0.025;
+        if (node.y > H - margin) node.vy -= 0.025;
         node.vx *= 0.99;
         node.vy *= 0.99;
 
@@ -131,8 +132,18 @@ export default function Segment1Molecule() {
         node.connections.forEach((targetIdx) => {
           const target = nodes[targetIdx];
           const d = Math.hypot(target.x - node.x, target.y - node.y);
-          const alpha = Math.max(0, 1 - d / 180) * 0.2;
-          ctx.strokeStyle = `rgba(37,99,235,${alpha})`;
+          const alpha = Math.max(0, 1 - d / 150) * 0.15;
+          
+          // Color by stage
+          const colors = [
+            "37,99,235",    // blue - molecule
+            "37,99,235",    // blue - R&D
+            "167,139,250",  // lavender - scale-up
+            "251,113,133",  // coral - mfg
+          ];
+          const color = colors[node.stage] || colors[0];
+          
+          ctx.strokeStyle = `rgba(${color},${alpha})`;
           ctx.lineWidth = 0.8;
           ctx.beginPath();
           ctx.moveTo(node.x, node.y);
@@ -142,27 +153,35 @@ export default function Segment1Molecule() {
 
         // Draw node
         const pulse = Math.sin(time + node.x * 0.01) * 0.5 + 0.5;
-        const r = node.r * (0.9 + pulse * 0.15);
+        const r = node.r * (0.85 + pulse * 0.2);
 
         // Glow
-        const glowGrad = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, r * 3.5);
-        glowGrad.addColorStop(0, `rgba(37,99,235,${0.25 + pulse * 0.15})`);
+        const colors = [
+          "37,99,235",    // blue
+          "37,99,235",
+          "167,139,250",  // lavender
+          "251,113,133",  // coral
+        ];
+        const color = colors[node.stage] || colors[0];
+
+        const glowGrad = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, r * 4);
+        glowGrad.addColorStop(0, `rgba(${color},${0.3 + pulse * 0.15})`);
         glowGrad.addColorStop(1, "transparent");
         ctx.fillStyle = glowGrad;
         ctx.beginPath();
-        ctx.arc(node.x, node.y, r * 3.5, 0, Math.PI * 2);
+        ctx.arc(node.x, node.y, r * 4, 0, Math.PI * 2);
         ctx.fill();
 
         // Core
-        ctx.fillStyle = "rgba(37,99,235,0.85)";
+        ctx.fillStyle = `rgba(${color},0.9)`;
         ctx.beginPath();
         ctx.arc(node.x, node.y, r, 0, Math.PI * 2);
         ctx.fill();
 
         // Highlight
-        ctx.fillStyle = "rgba(255,255,255,0.5)";
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
         ctx.beginPath();
-        ctx.arc(node.x - r*0.3, node.y - r*0.3, r*0.5, 0, Math.PI * 2);
+        ctx.arc(node.x - r*0.35, node.y - r*0.35, r*0.45, 0, Math.PI * 2);
         ctx.fill();
       });
 
@@ -182,24 +201,44 @@ export default function Segment1Molecule() {
   return (
     <section
       ref={sectionRef}
-      id="segment-1"
+      id="hero"
       className="relative w-full bg-white"
-      style={{ height: "200vh" }}
+      style={{ height: "150vh" }}
     >
       <div className="segment1-content sticky top-0 w-full h-screen flex items-center justify-center">
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
         
-        <div className="relative z-10 text-center px-8 pointer-events-none">
-          <div className="seg1-title">
-            <span className="t-label block mb-6">Segment 01</span>
-            <h1 className="t-display">
+        <div className="relative z-10 text-center px-8 pointer-events-none max-w-7xl mx-auto">
+          <div className="seg1-main-title space-y-6">
+            <span className="t-label block">CMCD · Chemplast Sanmar</span>
+            <h1 className="t-display leading-tight">
               FROM MOLECULE<br />
               TO MARKET.
             </h1>
+            <div className="w-24 h-px mx-auto" style={{ background: "var(--color-blue)" }} />
           </div>
-          <p className="seg1-subtitle t-body-large mt-8 max-w-2xl mx-auto">
-            Made possible through world-class manufacturing, safe and sustainable by design.
+          
+          <p className="seg1-subtitle t-body-large mt-10 max-w-3xl mx-auto">
+            World-class chemical manufacturing powered by safe, sustainable innovation.<br />
+            From R&D to commercial production.
           </p>
+
+          <div className="seg1-process-flow mt-16 flex items-center justify-center gap-4 text-sm font-medium"
+               style={{ color: "var(--color-muted)" }}>
+            <span style={{ color: "var(--color-blue)" }}>MOLECULE</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14m0 0l-6-6m6 6l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span style={{ color: "var(--color-blue)" }}>R&D</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14m0 0l-6-6m6 6l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span style={{ color: "var(--color-lavender)" }}>SCALE-UP</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14m0 0l-6-6m6 6l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <span style={{ color: "var(--color-coral)" }}>MANUFACTURING</span>
+          </div>
         </div>
       </div>
     </section>

@@ -61,9 +61,9 @@ export default function Segment3IntegratedFacility() {
   return (
     <section
       ref={sectionRef}
-      id="segment-3"
+      id="facility"
       className="relative w-full bg-white"
-      style={{ height: "250vh" }}
+      style={{ height: "400vh" }}
     >
       <div className="segment3-content sticky top-0 w-full h-screen flex items-center justify-center">
         <div className="w-full max-w-[1600px] mx-auto px-8">
