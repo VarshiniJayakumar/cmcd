@@ -8,52 +8,50 @@ const METRICS = [
     value: 30, 
     suffix: "+", 
     label: "Years of Experience", 
-    description: "Established expertise since 1993, serving global innovators",
+    description: "Established expertise since 1993, serving global innovators.",
     color: "var(--color-blue)" 
   },
   { 
     value: 900, 
-    suffix: "m³", 
+    suffix: " m³", 
     label: "Reactor Capacity", 
-    description: "State-of-the-art processing capability for commercial scale",
+    description: "Integrated capacity supporting reliable commercial supply.",
     color: "var(--color-blue)" 
   },
   { 
     value: 2, 
     suffix: "", 
     label: "Manufacturing Sites", 
-    description: "Integrated R&D, pilot and commercial facilities at Berigai",
+    description: "Integrated manufacturing capability.",
     color: "var(--color-lavender)" 
   },
   { 
     value: 50, 
     suffix: "+", 
     label: "Process Chemists", 
-    description: "Dedicated team of chemistry and engineering experts",
+    description: "Specialist chemistry expertise.",
     color: "var(--color-coral)" 
   },
   { 
     value: 15, 
     suffix: "+", 
     label: "Global Customers", 
-    description: "Trusted partnerships with leading pharma and agrochemical companies",
+    description: "Trusted by innovators across sectors.",
     color: "var(--color-green)" 
   },
   { 
     value: 20, 
     suffix: "+", 
     label: "Countries Served", 
-    description: "International reach delivering reliable commercial supply",
+    description: "Serving customers across global markets.",
     color: "var(--color-green)" 
   },
 ];
 
 export default function Segment4AboutNumbers() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [autoActiveIndex, setAutoActiveIndex] = useState<number | null>(null);
-  const [demoComplete, setDemoComplete] = useState(false);
-  const [animatedValues, setAnimatedValues] = useState<number[]>(METRICS.map(() => 0));
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const numberRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   useEffect(() => {
     initGSAP();
@@ -65,7 +63,6 @@ export default function Segment4AboutNumbers() {
       scrollTrigger: {
         trigger: section,
         start: "top 80%",
-        end: "top 20%",
         toggleActions: "play none none none",
       },
     });
@@ -88,17 +85,26 @@ export default function Segment4AboutNumbers() {
       "-=0.3"
     );
 
-    // Stagger metric cards
+    // Stagger metric cards entrance
     tl.fromTo(".metric-card",
       { opacity: 0, y: 40, scale: 0.95 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.1, ease: "power2.out" },
+      { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.08, ease: "power2.out" },
       "-=0.2"
     );
 
-    // After cards are visible, start automatic demonstration
-    tl.call(() => {
-      startAutoDemonstration();
-    }, undefined, "+=0.5");
+    // Animate all numbers counting up once on entrance
+    METRICS.forEach((metric, i) => {
+      tl.fromTo(numberRefs.current[i],
+        { textContent: 0 },
+        {
+          textContent: metric.value,
+          duration: 0.8,
+          ease: "power2.out",
+          snap: { textContent: 1 },
+        },
+        "-=0.5"
+      );
+    });
 
     return () => {
       tl.scrollTrigger?.kill();
@@ -106,55 +112,28 @@ export default function Segment4AboutNumbers() {
     };
   }, []);
 
-  // Automatic demonstration sequence
-  const startAutoDemonstration = () => {
-    let currentIndex = 0;
-    const interval = setInterval(() => {
-      setAutoActiveIndex(currentIndex);
-      
-      // Animate number counting for current card
-      const metric = METRICS[currentIndex];
-      gsap.fromTo(`.metric-number-${currentIndex}`,
-        { textContent: 0 },
-        {
-          textContent: metric.value,
-          duration: 1,
-          ease: "power2.out",
-          snap: { textContent: 1 },
-        }
-      );
-
-      currentIndex++;
-      
-      // After demonstrating all 6 cards, stop
-      if (currentIndex >= METRICS.length) {
-        clearInterval(interval);
-        setTimeout(() => {
-          setAutoActiveIndex(null);
-          setDemoComplete(true);
-        }, 1800); // Hold last card for 1.8s then release
+  // Handle click/tap on card
+  const handleCardClick = (index: number) => {
+    // Toggle: if clicking the active card, close it; otherwise activate new card
+    if (activeIndex === index) {
+      setActiveIndex(null);
+    } else {
+      setActiveIndex(index);
+      // Re-animate number when card is clicked
+      const metric = METRICS[index];
+      if (numberRefs.current[index]) {
+        gsap.fromTo(numberRefs.current[index],
+          { textContent: 0 },
+          {
+            textContent: metric.value,
+            duration: 0.6,
+            ease: "power2.out",
+            snap: { textContent: 1 },
+          }
+        );
       }
-    }, 1800); // Each card active for 1.8 seconds
-  };
-
-  // Re-animate number when card is hovered (after demo)
-  useEffect(() => {
-    if (demoComplete && hoveredIndex !== null) {
-      const metric = METRICS[hoveredIndex];
-      gsap.fromTo(`.metric-number-${hoveredIndex}`,
-        { textContent: 0 },
-        {
-          textContent: metric.value,
-          duration: 0.8,
-          ease: "power2.out",
-          snap: { textContent: 1 },
-        }
-      );
     }
-  }, [hoveredIndex, demoComplete]);
-
-  // Determine which card should be active
-  const activeIndex = demoComplete ? hoveredIndex : autoActiveIndex;
+  };
 
   return (
     <section
@@ -228,32 +207,13 @@ export default function Segment4AboutNumbers() {
               <p 
                 className="text-xs tracking-wider uppercase font-medium"
                 style={{ 
-                  color: demoComplete ? "var(--color-muted)" : "var(--color-blue)",
-                  opacity: demoComplete ? 0.5 : 0.8,
-                  transition: "all 0.5s ease",
+                  color: "var(--color-muted)",
+                  opacity: 0.6,
                 }}
               >
-                {demoComplete ? "Explore the proof points" : "Discovering capabilities..."}
+                Click to explore
               </p>
             </div>
-
-            {/* Subtle progress indicator during demo */}
-            {!demoComplete && autoActiveIndex !== null && (
-              <div className="flex justify-center lg:justify-start gap-2 -mt-4">
-                {METRICS.map((_, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      width: i === autoActiveIndex ? "24px" : "8px",
-                      height: "2px",
-                      background: i <= autoActiveIndex ? "var(--color-blue)" : "rgba(0,0,0,0.1)",
-                      transition: "all 0.3s ease",
-                      borderRadius: "1px",
-                    }}
-                  />
-                ))}
-              </div>
-            )}
 
             {/* 2x3 Grid of Metrics */}
             <div className="grid grid-cols-2 gap-6 lg:gap-8">
@@ -262,36 +222,57 @@ export default function Segment4AboutNumbers() {
                 const isOther = activeIndex !== null && activeIndex !== i;
                 
                 return (
-                  <div
+                  <button
                     key={i}
-                    className="metric-card opacity-0 relative p-6 lg:p-8 rounded-xl border-2 cursor-pointer overflow-hidden"
+                    type="button"
+                    className="metric-card opacity-0 relative p-6 lg:p-8 rounded-xl border-2 cursor-pointer overflow-hidden text-left"
                     style={{
                       borderColor: isActive ? metric.color : "rgba(0,0,0,0.08)",
                       background: isActive ? `${metric.color}05` : "rgba(255,255,255,0.95)",
                       transform: isActive 
                         ? "translateY(-8px) scale(1.03)" 
                         : "translateY(0) scale(1)",
-                      opacity: isOther ? 0.35 : 1,
+                      opacity: isOther ? 0.4 : 1,
                       boxShadow: isActive 
                         ? `0 16px 48px -12px ${metric.color}40, 0 0 0 1px ${metric.color}20` 
                         : "0 2px 12px rgba(0,0,0,0.04)",
-                      transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-                      pointerEvents: demoComplete ? "auto" : "none", // Disable hover during demo
+                      transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
-                    onMouseEnter={() => demoComplete && setHoveredIndex(i)}
-                    onMouseLeave={() => demoComplete && setHoveredIndex(null)}
-                    onClick={() => demoComplete && setHoveredIndex(i)} // Mobile tap support
+                    onClick={() => handleCardClick(i)}
+                    aria-pressed={isActive}
+                    aria-label={`${metric.value}${metric.suffix} ${metric.label}: ${metric.description}`}
                   >
-                    {/* Animated connection indicator during demo */}
-                    {!demoComplete && isActive && (
-                      <div 
-                        className="absolute top-0 left-0 w-full h-1"
+                    {/* Clickable indicator - top right corner */}
+                    <div 
+                      className="absolute top-3 right-3 flex items-center justify-center"
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        borderRadius: "50%",
+                        border: `1.5px solid ${isActive ? metric.color : "rgba(0,0,0,0.15)"}`,
+                        background: isActive ? `${metric.color}15` : "transparent",
+                        transition: "all 0.4s ease",
+                      }}
+                    >
+                      <svg 
+                        width="10" 
+                        height="10" 
+                        viewBox="0 0 10 10"
                         style={{
-                          background: `linear-gradient(90deg, transparent 0%, ${metric.color} 50%, transparent 100%)`,
-                          animation: "slideAcross 1.8s ease-in-out",
+                          transform: isActive ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 0.4s ease",
                         }}
-                      />
-                    )}
+                      >
+                        <path 
+                          d="M2 3 L5 6 L8 3" 
+                          fill="none" 
+                          stroke={isActive ? metric.color : "rgba(0,0,0,0.3)"} 
+                          strokeWidth="1.5" 
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
 
                     {/* Metric-specific animated graphic */}
                     <MetricVisual index={i} isActive={isActive} color={metric.color} />
@@ -302,7 +283,7 @@ export default function Segment4AboutNumbers() {
                       style={{ 
                         background: `radial-gradient(circle at 50% 40%, ${metric.color}12 0%, transparent 70%)`,
                         opacity: isActive ? 1 : 0,
-                        transition: "opacity 0.5s ease",
+                        transition: "opacity 0.4s ease",
                       }}
                     />
 
@@ -313,10 +294,10 @@ export default function Segment4AboutNumbers() {
                         style={{ 
                           color: isActive ? metric.color : "var(--color-dark)",
                           transform: isActive ? "scale(1.05)" : "scale(1)",
-                          transition: "all 0.5s ease",
+                          transition: "all 0.4s ease",
                         }}
                       >
-                        <span className={`metric-number-${i}`}>0</span>
+                        <span ref={el => { numberRefs.current[i] = el; }}>0</span>
                         <span className="text-4xl lg:text-5xl">{metric.suffix}</span>
                       </div>
                       
@@ -326,7 +307,7 @@ export default function Segment4AboutNumbers() {
                         style={{ 
                           color: isActive ? metric.color : "var(--color-dark)",
                           transform: isActive ? "translateY(-4px)" : "translateY(0)",
-                          transition: "all 0.5s ease",
+                          transition: "all 0.4s ease",
                         }}
                       >
                         {metric.label}
@@ -339,7 +320,7 @@ export default function Segment4AboutNumbers() {
                           width: isActive ? "60px" : "24px",
                           height: "2px",
                           background: isActive ? metric.color : "rgba(0,0,0,0.1)",
-                          transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                         }}
                       />
 
@@ -349,7 +330,7 @@ export default function Segment4AboutNumbers() {
                           maxHeight: isActive ? "100px" : "0px",
                           opacity: isActive ? 1 : 0,
                           overflow: "hidden",
-                          transition: "all 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+                          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                         }}
                       >
                         <p 
@@ -363,35 +344,23 @@ export default function Segment4AboutNumbers() {
 
                     {/* Corner technical accent */}
                     <svg 
-                      className="absolute bottom-3 right-3"
+                      className="absolute bottom-3 left-3"
                       width="20" 
                       height="20" 
                       viewBox="0 0 20 20"
                       style={{
                         opacity: isActive ? 0.4 : 0.1,
-                        transition: "opacity 0.5s ease",
+                        transition: "opacity 0.4s ease",
                       }}
                     >
                       <line x1="0" y1="20" x2="20" y2="20" stroke={metric.color} strokeWidth="1" />
-                      <line x1="20" y1="0" x2="20" y2="20" stroke={metric.color} strokeWidth="1" />
-                      <circle cx="20" cy="20" r="2" fill={metric.color} />
+                      <line x1="0" y1="0" x2="0" y2="20" stroke={metric.color} strokeWidth="1" />
+                      <circle cx="0" cy="20" r="2" fill={metric.color} />
                     </svg>
-                  </div>
+                  </button>
                 );
               })}
             </div>
-
-            {/* Add sliding animation keyframe */}
-            <style jsx>{`
-              @keyframes slideAcross {
-                0% {
-                  transform: translateX(-100%);
-                }
-                100% {
-                  transform: translateX(100%);
-                }
-              }
-            `}</style>
 
             {/* Subtle background technical visualization */}
             <div className="relative -mt-4 opacity-5 pointer-events-none">
